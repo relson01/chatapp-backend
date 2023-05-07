@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                       String                     @id @default(auto()) @map("_id") @db.ObjectId
+  name                     String
+  username                 String?                    @unique
+  password                 String?
+  email                    String                     @unique
+  emailVerified            Boolean                    @default(false)
+  image                    String
+  expires                  DateTime?
+  conversationParticipants ConversationParticipants[]
+  message                  Message[]
+  lastSeen                 DateTime?
+}
+
+model ConversationParticipants {
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String      @db.ObjectId
+  user           User        @relation(fields: [userId], references: [id])
+  conversationID String      @db.ObjectId
+  conversation   Converation @relation(fields: [conversationID], references: [id])
+}
+
+enum ConverationType {
+  SINGLE
+  GROUP
+}
+
+model Converation {
+  id                      String                     @id @default(auto()) @map("_id") @db.ObjectId
+  converationType         ConverationType            @default(SINGLE)
+  hasUnseenMessage        Boolean                    @default(false)
+  conversationParticipant ConversationParticipants[]
+}
+
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId  String   @db.ObjectId
+  sender    User     @relation(fields: [senderId], references: [id])
+  body      String
+  createdAt DateTime
+}
